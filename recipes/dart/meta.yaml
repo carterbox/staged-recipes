@@ -6,20 +6,25 @@ package:
   version: {{ version }}
 
 source:
-  url: {{ dart_archive }}{{ version }}/sdk/dartsdk-linux-x64-release.zip  # [linux64]
-  sha256: 5bd5ff07c74bab4f26b24d161b3825e1b78f11ee15cb941c30ba4f31a2a05bef  # [linux64]
-  url: {{ dart_archive }}{{ version  }}/sdk/dartsdk-macos-x64-release.zip  # [osx]
-  sha256: e031c10a38a69a4a461ea954b851860ac27d1ca890df1e194777119707d7aa56  # [osx]
-  url: {{ dart_archive }}{{ version }}/sdk/dartsdk-windows-x64-release.zip  # [win64]
-  sha256: 0a9904303233729ff55a091f15465d4e3ea259f5cba580a1e5b48233842dff71  # [win64]
+  url: https://github.com/dart-lang/sdk/archive/{{ version }}.tar.gz  # [win64]
+  sha256: ed528241c50a8f454852c6d361bb57c168861bbeb17cb81026aa59c16e478f1b  # [win64]
+  folder: dart_sdk
+  url: https://storage.googleapis.com/chrome-infra/depot_tools.zip  # [win64]
+  sha256: 96f2453ba90c2e845ddd68d67d16d0ac6cf8abc66e62a2446ccf6d718c2d2ad2  # [win64]
+  folder: depot_tools
 
 build:
   number: 0
   skip: True  # [not linux64 and not osx and not win64]
   run_exports:
     - dark-sdk
-  binary_relocation: False
+  # binary_relocation: False
 
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - python 3.6
+    -
 test:
   files:
     - hello-world.dart
@@ -33,7 +38,7 @@ about:
   home: https://dart.dev
   license: BSD-3-Clause
   license_family: BSD
-  license_file: LICENSE
+  license_file: dart_sdk/LICENSE
   summary: The Dart SDK is a set of tools and libraries for the Dart programming language.
   doc_url: https://dart.dev/guides
   dev_url: https://github.com/dart-lang/sdk
