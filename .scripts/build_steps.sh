@@ -38,6 +38,7 @@ pushd /home/conda/staged-recipes/recipes > /dev/null
 if [ "${AZURE}" == "True" ]; then
     git fetch --force origin main:main
 fi
+git config --global --add safe.directory /home/conda/staged-recipes
 git ls-tree --name-only main -- . | xargs -I {} sh -c "rm -rf ~/staged-recipes-copy/recipes/{} && echo Removing recipe: {}"
 popd > /dev/null
 
