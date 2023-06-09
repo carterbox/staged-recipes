@@ -1,0 +1,107 @@
+{% set name = "OpenSYCL" %}
+{% set version = "0.9.4" %}
+
+package:
+  name: {{ name|lower }}-split
+  version: {{ version }}
+
+source:
+  url: https://github.com/OpenSYCL/OpenSYCL/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: 6262533191c812966e2f8b67e6ae510ae5ad2cf7e0caecc9957e8a69423e51c4
+
+build:
+  number: 0
+  script_env:
+    - CMAKE_GENERATOR=Ninja
+  has_prefix_files:
+  # FIXME: Not working for BUILD_PREFIX
+    - etc/hipSYCL/syclcc.json
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake
+    - ninja
+  host:
+    - boost-cpp
+    # - clangdev
+    # - llvmdev
+
+outputs:
+
+  - name: libhipsycl
+    run_exports:
+      - {{ pin_subpackage('libhipsycl', max_pin='x.x.x') }}
+    files:
+      - lib/hipSYCL/
+      - lib/libhipSYCL*
+    requirements:
+      build:
+        - {{ compiler('cxx') }}
+
+  - name: opensycl
+    run_exports:
+      - {{ pin_subpackage('libhipsycl', max_pin='x.x.x') }}
+    files:
+      - bin/hipsycl*
+      - bin/syclcc*
+      - etc/hipSYCL/
+      - include/CL/
+      - include/hipSYCL/
+      - include/sycl/
+      - include/SYCL/
+      - lib/cmake/hipSYCL/
+    requirements:
+      build:
+        - {{ compiler('cxx') }}
+      run:
+        - {{ pin_subpackage('libhipsycl', exact=True) }}
+      # OpenSYCL headers include boost headers, so you may need boost when
+      # compiling with syclcc
+        - boost-cpp
+      # bin/syclcc* are python script wrappers around the host compiler
+        - python =3.*
+    test:
+      script: run_test.sh
+      requires:
+      # The CXX compiler is a host compiler, so like CUDA, you must depend on it
+      # separately
+        - {{ compiler('cxx') }}
+        - cmake
+        - ninja
+      source_files:
+        - examples/
+
+
+about:
+  home: https://github.com/OpenSYCL/OpenSYCL
+  summary: 'Multi-backend implementation of SYCL for CPUs and GPUs'
+  description: |
+    Open SYCL is a modern SYCL implementation targeting CPUs and GPUs from all
+    major vendors that supports many use cases and approaches for implementing
+    SYCL:
+
+    1. A generic, single-pass compiler infrastructure that compiles kernels to
+    a unified code representation that is then lowered at runtime to target
+    devices, providing a high degree of portability, low compilation times,
+    flexibility and extensibility.
+
+    2. Additionally, Open SYCL can aggregate existing clang toolchains and
+    augment them with support for SYCL constructs. This allows for a high
+    degree of interoperability between SYCL and other models such as CUDA or
+    HIP.
+
+    3. Or Open SYCL can be used in library-only compilation flows. In these
+    compilation flows, Open SYCL acts as a C++ library for third-party
+    compilers. This can have portability advantages or simplify deployment.
+
+  license: BSD-2-Clause
+  license_family: BSD
+  license_file: LICENSE
+  dev_url: https://github.com/OpenSYCL/OpenSYCL
+
+extra:
+  recipe-maintainers:
+    - carterbox
+  feedstock-name:
+    - opensycl
