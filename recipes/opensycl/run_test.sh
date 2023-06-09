@@ -1,12 +1,14 @@
 set -ex
 
+export HIPSYCL_CPU_CXX=${CXX}
+
 mkdir build
 cd build
 
-cmake ../examples -GNinja
+cmake ../tests -GNinja
 
 cmake --build . -v -j $CPU_COUNT
 
-ls -la
-
-./bruteforce_nbody/bruteforce_nbody
+./device_compilation_tests
+./rt_tests
+./sycl_tests

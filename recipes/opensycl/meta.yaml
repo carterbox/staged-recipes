@@ -1,5 +1,8 @@
 {% set version = "0.9.4" %}
 
+# As of June 2023, opensycl is not tested against any llvm later than 14
+{% set llvm_version = "15" %}
+
 package:
   name: opensycl-split
   version: {{ version }}
@@ -9,22 +12,21 @@ source:
   sha256: 6262533191c812966e2f8b67e6ae510ae5ad2cf7e0caecc9957e8a69423e51c4
 
 build:
-  number: 0
+  number: 2
   script_env:
     - CMAKE_GENERATOR=Ninja
-  has_prefix_files:
-  # FIXME: Not working for BUILD_PREFIX
-    - etc/hipSYCL/syclcc.json
 
 requirements:
   build:
     - {{ compiler('cxx') }}
     - cmake
+    - llvm-openmp  # [osx]
+    - libgomp      # [linux]
     - ninja
   host:
     - boost-cpp
-    # - clangdev
-    # - llvmdev
+    - clangdev {{ llvm_version }}
+    - llvmdev {{ llvm_version }}
 
 outputs:
 
@@ -37,6 +39,8 @@ outputs:
     requirements:
       build:
         - {{ compiler('cxx') }}
+        - llvm-openmp  # [osx]
+        - libgomp      # [linux]
 
   - name: opensycl
     run_exports:
@@ -53,13 +57,24 @@ outputs:
     requirements:
       build:
         - {{ compiler('cxx') }}
+        - llvm-openmp  # [osx]
+        - libgomp      # [linux]
+      host:
+        - {{ pin_subpackage('libhipsycl', exact=True) }}
+        - boost-cpp
+        - clangdev {{ llvm_version }}
+        - llvmdev {{ llvm_version }}
       run:
         - {{ pin_subpackage('libhipsycl', exact=True) }}
-      # OpenSYCL headers include boost headers, so you may need boost when
+      # OpenSYCL headers include the following headers, so need them when
       # compiling with syclcc
         - boost-cpp
+        - llvm-openmp
       # bin/syclcc* are python script wrappers around the host compiler
         - python =3.*
+      # clang++ is needed in addition to the host compiler
+        - clangxx {{ llvm_version }}
+
     test:
       script: run_test.sh
       requires:
@@ -70,7 +85,6 @@ outputs:
         - ninja
       source_files:
         - tests/
-
 
 about:
   home: https://github.com/OpenSYCL/OpenSYCL

@@ -1,13 +1,11 @@
-
 mkdir build
 cd build
 
-echo "CMAKE_ARGS are %CMAKE_ARGS%"
-
 cmake .. ^
+    -DWITH_ACCELERATED_CPU:BOOL=ON ^
     -DBUILD_SHARED_LIBS:BOOL=ON ^
     %CMAKE_ARGS%
 
-cmake --build . -v
+cmake --build . -v -j %CPU_COUNT%
 
 cmake --install . -v
