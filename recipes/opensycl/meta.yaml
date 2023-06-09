@@ -1,8 +1,7 @@
-{% set name = "OpenSYCL" %}
 {% set version = "0.9.4" %}
 
 package:
-  name: {{ name|lower }}-split
+  name: opensycl-split
   version: {{ version }}
 
 source:
@@ -70,7 +69,7 @@ outputs:
         - cmake
         - ninja
       source_files:
-        - examples/
+        - tests/
 
 
 about:
