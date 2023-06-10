@@ -19,7 +19,7 @@ source:
     - findcuda.patch
 
 build:
-  number: 4
+  number: 0
   skip: true  # [cuda_compiler_version != "None"]
   script_env:
     - CMAKE_GENERATOR=Ninja
