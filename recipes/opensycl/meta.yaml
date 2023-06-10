@@ -3,6 +3,11 @@
 # As of June 2023, opensycl is not tested against any llvm later than 14
 {% set llvm_version = "15" %}
 
+{% if cuda_compiler_version is not defined %}
+  {% set cuda_compiler_version = "None" %}
+{% endif %}
+{% set cuda_major = environ.get("cuda_compiler_version", "0.0").split(".")[0]|int %}
+
 package:
   name: opensycl-split
   version: {{ version }}
@@ -10,20 +15,30 @@ package:
 source:
   url: https://github.com/OpenSYCL/OpenSYCL/archive/refs/tags/v{{ version }}.tar.gz
   sha256: 6262533191c812966e2f8b67e6ae510ae5ad2cf7e0caecc9957e8a69423e51c4
+  patches:
+    - findcuda.patch
 
 build:
-  number: 2
+  number: 4
+  skip: true  # [cuda_compiler_version != "None"]
   script_env:
     - CMAKE_GENERATOR=Ninja
+    - WITH_CUDA_BACKEND=ON   # [cuda_compiler_version != "None"]
+    - WITH_CUDA_BACKEND=OFF  # [cuda_compiler_version == "None"]
 
 requirements:
   build:
     - {{ compiler('cxx') }}
+    - {{ compiler('cuda') }}  # [cuda_compiler_version != "None"]
     - cmake
     - llvm-openmp  # [osx]
     - libgomp      # [linux]
     - ninja
   host:
+{% if cuda_major == 12 %}
+    - cuda-cudart-dev
+    - cuda-driver-dev
+{% endif %}
     - boost-cpp
     - clangdev {{ llvm_version }}
     - llvmdev {{ llvm_version }}
@@ -39,8 +54,14 @@ outputs:
     requirements:
       build:
         - {{ compiler('cxx') }}
+        - {{ compiler('cuda') }}  # [cuda_compiler_version != "None"]
         - llvm-openmp  # [osx]
         - libgomp      # [linux]
+      host:
+{% if cuda_major == 12 %}
+        - cuda-cudart-dev
+        - cuda-driver-dev
+{% endif %}
 
   - name: opensycl
     run_exports:
@@ -72,7 +93,9 @@ outputs:
         - llvm-openmp
       # bin/syclcc* are python script wrappers around the host compiler
         - python =3.*
-      # clang++ is needed in addition to the host compiler
+      run_constrained:
+      # clang++ is needed in addition to the host compiler only for certain
+      # sycl targets
         - clangxx {{ llvm_version }}
 
     test:
@@ -81,6 +104,8 @@ outputs:
       # The CXX compiler is a host compiler, so like CUDA, you must depend on it
       # separately
         - {{ compiler('cxx') }}
+        - {{ compiler('cuda') }}  # [cuda_compiler_version != "None"]
+        - clangxx
         - cmake
         - ninja
       source_files:

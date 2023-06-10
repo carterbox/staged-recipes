@@ -1,6 +1,7 @@
 set -ex
 
 export HIPSYCL_CPU_CXX=${CXX}
+export HIPSYCL_TARGETS='omp.accelerated'
 
 mkdir build
 cd build

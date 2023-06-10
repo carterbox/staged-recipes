@@ -1,0 +1,178 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index b3c41bea..adce9238 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -39,7 +39,7 @@ if(NOT Boost_FOUND)
+ endif()
+ 
+ # Check for CUDA/ROCm and clang
+-find_package(CUDA QUIET)
++find_package(CUDAToolkit QUIET)
+ find_package(HIP QUIET HINTS ${ROCM_PATH} ${ROCM_PATH}/lib/cmake)
+ 
+ # In case HIP is not found via the cmake pkgs we fall back to the legacy rocm discovery:
+@@ -58,14 +58,14 @@ else()
+ endif()
+ 
+ if(WITH_CUDA_BACKEND)
+-  if(NOT CUDA_FOUND)
++  if(NOT CUDAToolkit_FOUND)
+     message(SEND_ERROR "CUDA was not found")
+   endif()
+ endif()
+ if(WITH_ROCM_BACKEND)
+   if(NOT ROCM_FOUND)
+     #  message(SEND_ERROR "hipcc was not found")
+-  
++
+     # User has requested ROCm, but we could not find hipcc.
+     # this is not necessarily a reason to abort,
+     # since we only need libhip_hcc, the HIP includes,
+@@ -76,7 +76,7 @@ if(WITH_ROCM_BACKEND)
+   endif()
+ endif()
+ 
+-set(WITH_CUDA_BACKEND ${CUDA_FOUND} CACHE BOOL "Build hipSYCL support for NVIDIA GPUs with CUDA")
++set(WITH_CUDA_BACKEND ${CUDAToolkit_FOUND} CACHE BOOL "Build hipSYCL support for NVIDIA GPUs with CUDA")
+ set(WITH_ROCM_BACKEND ${ROCM_FOUND} CACHE BOOL "Build hipSYCL support for AMD GPUs with ROCm")
+ set(WITH_CUDA_NVCXX_ONLY FALSE CACHE BOOL "Whether to target CUDA exclusively with nvc++")
+ 
+@@ -89,8 +89,9 @@ set(WITH_CPU_BACKEND true)
+ 
+ if(WITH_CUDA_BACKEND)
+   set(DEFAULT_PLATFORM "cuda")
+-  find_library(CUDA_DRIVER_LIBRARY cuda HINTS ${CUDA_TOOLKIT_ROOT_DIR}/lib64/stubs ${CUDA_TOOLKIT_ROOT_DIR}/lib/x64 REQUIRED)
+-  message(STATUS "Found CUDA driver library: ${CUDA_DRIVER_LIBRARY}")
++  find_package(CUDAToolkit REQUIRED COMPONENTS cuda_driver cudart)
++  get_target_property(CUDA_DRIVER_LIBRARY CUDA::cuda_driver LOCATION)
++  message(STATUS "Found CUDA driver library: ${CUDA_DRIVER_LIBRARY}" )
+ 
+   find_program(NVCXX_COMPILER NAMES nvc++)
+ elseif(WITH_ROCM_BACKEND)
+@@ -144,7 +145,7 @@ if(BUILD_CLANG_PLUGIN)
+   get_filename_component(LLVM_BIN_DIR "${CLANG_EXECUTABLE_PATH}" DIRECTORY)
+   get_filename_component(LLVM_PREFIX_DIR "${LLVM_BIN_DIR}" DIRECTORY)
+   # The path to the internal clang includes is currently required on ROCm
+-  # to let syclcc-clang fix a wrong order of system includes (clang's internal 
++  # to let syclcc-clang fix a wrong order of system includes (clang's internal
+   # includes are not of high enough priority in the include path search order).
+   # We identify this path as the one containing __clang_cuda_runtime_wrapper.h,
+   # which is a clang-specific header file.
+@@ -162,7 +163,7 @@ if(BUILD_CLANG_PLUGIN)
+     # Required for newer ROCm versions
+     set(CLANG_INCLUDE_PATH ${FOUND_CLANG_INCLUDE_PATH}/..)
+   endif()
+-  
++
+   if(NOT EXISTS ${CLANG_INCLUDE_PATH})
+     message(SEND_ERROR "clang include path ${CLANG_INCLUDE_PATH} does not exist. Please provide clang's internal include path manually: Find the directory where __clang_cuda_runtime_wrapper.h is. Provide this directory for older ROCm versions and the parent directory for newer ones.")
+   endif()
+@@ -204,7 +205,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
+ add_subdirectory(src)
+ 
+ set(SYCLCC_CONFIG_FILE_PATH "${PROJECT_BINARY_DIR}/syclcc.json")
+-set(SYCLCC_CONFIG_FILE_GLOBAL_INSTALLATION false CACHE BOOL 
++set(SYCLCC_CONFIG_FILE_GLOBAL_INSTALLATION false CACHE BOOL
+   "Whether to install the syclcc configuration file into a global directory (typically, /etc/hipSYCL). This is generally not recommended.")
+ 
+ if(SYCLCC_CONFIG_FILE_GLOBAL_INSTALLATION)
+@@ -228,7 +229,7 @@ endif()
+ 
+ if(APPLE)
+   set(DEFAULT_OMP_FLAG "-Xclang -fopenmp")
+-  
++
+   if(Boost_FIBER_LIBRARY_DEBUG)
+     set(DEFAULT_BOOST_LIBRARIES "${Boost_CONTEXT_LIBRARY_DEBUG} ${Boost_FIBER_LIBRARY_DEBUG} -Wl,-rpath ${Boost_LIBRARY_DIR}")
+   else()
+@@ -278,7 +279,7 @@ if(WIN32)
+   if(NOT OMP_LINK_LINE)
+     set(OMP_LINK_LINE ${DEFAULT_WIN32_OMP_LINK_LINE} CACHE STRING "Arguments passed to compiler to link OpenMP libraries to SYCL applications")
+   endif()
+-  if(NOT SEQUENTIAL_LINK_LINE) 
++  if(NOT SEQUENTIAL_LINK_LINE)
+     set(SEQUENTIAL_LINK_LINE ${DEFAULT_WIN32_SEQUENTIAL_LINK_LINE} CACHE STRING "Arguments passed to compiler to link host libraries to SYCL applications")
+   endif()
+ elseif(APPLE)
+@@ -288,7 +289,7 @@ elseif(APPLE)
+   if(NOT OMP_LINK_LINE)
+     set(OMP_LINK_LINE ${DEFAULT_APPLE_OMP_LINK_LINE} CACHE STRING "Arguments passed to compiler to link OpenMP libraries to SYCL applications")
+   endif()
+-  if(NOT SEQUENTIAL_LINK_LINE) 
++  if(NOT SEQUENTIAL_LINK_LINE)
+     set(SEQUENTIAL_LINK_LINE ${DEFAULT_APPLE_SEQUENTIAL_LINK_LINE} CACHE STRING "Arguments passed to compiler to link host libraries to SYCL applications")
+   endif()
+ else()
+@@ -298,33 +299,33 @@ else()
+   if(NOT OMP_LINK_LINE)
+     set(OMP_LINK_LINE ${DEFAULT_OMP_LINK_LINE} CACHE STRING "Arguments passed to compiler to link OpenMP libraries to SYCL applications")
+   endif()
+-  if(NOT SEQUENTIAL_LINK_LINE) 
++  if(NOT SEQUENTIAL_LINK_LINE)
+     set(SEQUENTIAL_LINK_LINE ${DEFAULT_SEQUENTIAL_LINK_LINE} CACHE STRING "Arguments passed to compiler to link host libraries to SYCL applications")
+   endif()
+ endif()
+ 
+ # If no compile flags given, set to default.
+ if(NOT ROCM_CXX_FLAGS)
+-  # clang erroneously sets feature detection flags for 
++  # clang erroneously sets feature detection flags for
+   # __float128 even though it is not supported for CUDA / HIP,
+   # see https://bugs.llvm.org/show_bug.cgi?id=47559.
+ 
+   set(ROCM_CXX_FLAGS "-isystem $HIPSYCL_PATH/include/hipSYCL/std/hiplike -isystem ${CLANG_INCLUDE_PATH} -U__FLOAT128__ -U__SIZEOF_FLOAT128__ -I$HIPSYCL_ROCM_PATH/include -I$HIPSYCL_ROCM_PATH/include --rocm-device-lib-path=$HIPSYCL_ROCM_PATH/amdgcn/bitcode --rocm-path=$HIPSYCL_ROCM_PATH -fhip-new-launch-api -mllvm -amdgpu-early-inline-all=true -mllvm -amdgpu-function-calls=false -D__HIP_ROCclr__" CACHE STRING "Arguments passed to compiler to compile SYCL applications with ROCm")
+ endif()
+ 
+-if(NOT CUDA_CXX_FLAGS)	
+-  # clang erroneously sets feature detection flags for 
++if(NOT CUDA_CXX_FLAGS)
++  # clang erroneously sets feature detection flags for
+   # __float128 even though it is not supported for CUDA / HIP,
+   # see https://bugs.llvm.org/show_bug.cgi?id=47559.
+   set(CUDA_CXX_FLAGS "-U__FLOAT128__ -U__SIZEOF_FLOAT128__ -isystem $HIPSYCL_PATH/include/hipSYCL/std/hiplike" CACHE STRING "Arguments passed to compiler to compile SYCL applications with CUDA")
+ endif()
+ 
+ # always need -D_ENABLE_EXTENDED_ALIGNED_STORAGE to allow correctly aligned local memory on CPU
+-if(NOT OMP_CXX_FLAGS) 
++if(NOT OMP_CXX_FLAGS)
+   set(OMP_CXX_FLAGS "-I${Boost_INCLUDE_DIR} ${DEFAULT_OMP_FLAG} -D_ENABLE_EXTENDED_ALIGNED_STORAGE" CACHE STRING "Arguments passed to compiler to compile SYCL applications with OpenMP")
+ endif()
+ 
+-if(NOT SEQUENTIAL_CXX_FLAGS) 
++if(NOT SEQUENTIAL_CXX_FLAGS)
+   set(SEQUENTIAL_CXX_FLAGS "-I${Boost_INCLUDE_DIR} -D_ENABLE_EXTENDED_ALIGNED_STORAGE" CACHE STRING "Arguments passed to compiler to compile SYCL applications on host")
+ endif()
+ 
+diff --git a/src/runtime/CMakeLists.txt b/src/runtime/CMakeLists.txt
+index 8a283f15..b7205515 100644
+--- a/src/runtime/CMakeLists.txt
++++ b/src/runtime/CMakeLists.txt
+@@ -101,8 +101,8 @@ if(WITH_CUDA_BACKEND)
+   target_include_directories(rt-backend-cuda PRIVATE
+     ${HIPSYCL_SOURCE_DIR}/include
+     ${CUDA_TOOLKIT_ROOT_DIR}/include)
+-  
+-  target_link_libraries(rt-backend-cuda PRIVATE hipSYCL-rt ${CUDA_LIBRARIES} ${CUDA_DRIVER_LIBRARY})
++
++  target_link_libraries(rt-backend-cuda PRIVATE hipSYCL-rt CUDA::cuda_driver CUDA::cudart)
+ 
+   target_compile_options(rt-backend-cuda PRIVATE ${HIPSYCL_RT_EXTRA_CXX_FLAGS})
+   target_link_libraries(rt-backend-cuda PRIVATE ${HIPSYCL_RT_EXTRA_LINKER_FLAGS})
+@@ -158,7 +158,7 @@ if(WITH_LEVEL_ZERO_BACKEND)
+     ze/ze_event.cpp
+     ze/ze_queue.cpp
+     ze/ze_code_object.cpp)
+-  
++
+   target_include_directories(rt-backend-ze PRIVATE ${HIPSYCL_SOURCE_DIR}/include)
+   target_link_libraries(rt-backend-ze PRIVATE hipSYCL-rt -lze_loader)
+ 
+@@ -189,7 +189,7 @@ if(WITH_CPU_BACKEND)
+       string(JOIN " " hipSYCL_OpenMP_CXX_LIBRARIES ${OpenMP_CXX_LIBRARIES})
+       set(hipSYCL_OpenMP_CXX_LIBRARIES ${hipSYCL_OpenMP_CXX_LIBRARIES} PARENT_SCOPE)
+     endif()
+-  
++
+   list(LENGTH OpenMP_CXX_LIBRARIES OpenMP_CXX_LIBRARIES_LENGTH)
+   if(WIN32 AND ${OpenMP_CXX_LIBRARIES_LENGTH} EQUAL 0)
+     # FindOpenMP does a bad job here, finding any library.. so add some more hints..
