@@ -25,6 +25,8 @@ build:
     - CMAKE_GENERATOR=Ninja
     - WITH_CUDA_BACKEND=ON   # [cuda_compiler_version != "None"]
     - WITH_CUDA_BACKEND=OFF  # [cuda_compiler_version == "None"]
+  has_prefix_files:
+    - /etc/hipSYCL/syclcc.json
 
 requirements:
   build:

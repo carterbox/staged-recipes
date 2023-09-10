@@ -19,4 +19,5 @@ cmake --install . -v
 # relocate build prefixes. Setting the default-cpu-cxx to $CXX doesn't work.
 # https://github.com/conda/conda-build/issues/2677
 # https://github.com/conda/conda-build/issues/2995
-sed -i'.backup' -e '/"default-cpu-cxx"/c\  "default-cpu-cxx"   : "",' $PREFIX/etc/hipSYCL/syclcc.json
+sed -i'.backup' -e"s,$BUILD_PREFIX,$PREFIX,g" $PREFIX/etc/hipSYCL/syclcc.json
+rm $PREFIX/etc/hipSYCL/syclcc.json.backup
