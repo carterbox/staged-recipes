@@ -1,0 +1,6 @@
+# As of June 2023, opensycl is not tested against any llvm later than 14
+llvm_version:
+  - 12
+  - 13
+  - 14
+  - 15

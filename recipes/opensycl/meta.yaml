@@ -1,8 +1,5 @@
 {% set version = "0.9.4" %}
 
-# As of June 2023, opensycl is not tested against any llvm later than 14
-{% set llvm_version = "15" %}
-
 {% if cuda_compiler_version is not defined %}
   {% set cuda_compiler_version = "None" %}
 {% endif %}
@@ -20,6 +17,7 @@ source:
 
 build:
   number: 0
+  string:  llvm{{ llvm_version }}h{{ PKG_HASH }}_{{ PKG_BUILDNUM }}
   skip: true  # [cuda_compiler_version != "None"]
   script_env:
     - CMAKE_GENERATOR=Ninja
