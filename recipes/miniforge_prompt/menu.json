@@ -8,7 +8,7 @@
             "command": [
                 "{{ PREFIX }}/bin/"
             ],
-            "icon": "{{ MENU_DIR }}/.{{ ICON_EXT }}",
+            "icon": "{{ MENU_DIR }}/miniforge_prompt.{{ ICON_EXT }}",
             "activate": false,
             "terminal": false,
             "platforms": {
