@@ -1,37 +1,35 @@
 {
-    "$schema": "https://json-schema.org/draft-07/schema",
-    "$id": "https://schemas.conda.io/menuinst-1.schema.json",
+    "$schema": "https://schemas.conda.org/menuinst/menuinst-1-1-2.schema.json",
     "menu_name": "Miniforge ({{ DISTRIBUTION_NAME }})",
     "menu_items": [
         {
             "name": "Miniforge Prompt__ENV_PLACEHOLDER__",
+            "description": "Launches a terminal window with conda activated.",
             "command": [
                 "{{ PREFIX }}/bin/"
             ],
+            "icon": "{{ MENU_DIR }}/.{{ ICON_EXT }}",
             "activate": false,
             "terminal": false,
-            "icon": "{{ MENU_DIR }}/.{{ ICON_EXT }}",
-            "description": "Launches a terminal window with conda activated.",
             "platforms": {
                 "win": {
-		    "desktop": false,
-		    "quicklaunch": false,
-                    "terminal_profile": "Miniforge Prompt ({{ DISTRIBUTION_NAME }}__ENV_PLACEHOLDER_TERMINAL__)",
-                    "app_user_model_id": "miniforge.CmdExe.{{ DISTRIBUTION_NAME }}.{{ ENV_NAME }}",
                     "command": [
                         "%WINDIR%\\System32\\cmd.exe",
                         "/K",
                         "{{ BASE_PREFIX }}\\Scripts\\activate.bat",
                         "{{ PREFIX }}"
                     ],
-                    "working_dir": "{{ HOME }}"
+                    "working_dir": "{{ HOME }}",
+                    "desktop": false,
+                    "terminal_profile": "Miniforge Prompt ({{ DISTRIBUTION_NAME }}__ENV_PLACEHOLDER_TERMINAL__)",
+                    "app_user_model_id": "miniforge.CmdExe.{{ DISTRIBUTION_NAME }}.{{ ENV_NAME }}"
                 },
                 "osx": {
                     "entitlements": [
                         "com.apple.security.automation.apple-events"
                     ]
                 },
-		"linux": null
+                "linux": null
             }
         }
     ]
